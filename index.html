@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macro Recorder (mirip iMacros)</title>
+<style>
+:root{--bg:#f6f8f7;--fg:#16221d;--card:#fff;--ac:#0a7a5a;--bd:#d6dfdb}
+@media(prefers-color-scheme:dark){:root{--bg:#121816;--fg:#e6efeb;--card:#1b2420;--ac:#3fcf9f;--bd:#2c3a34}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 8px;color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin:14px 0}
+button,.bm{background:var(--ac);color:#fff;border:0;border-radius:6px;padding:8px 12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+code,pre{background:rgba(127,127,127,.15);border-radius:4px;padding:1px 5px;font-size:13px}
+pre{padding:8px;overflow-x:auto}
+input{font:inherit;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--fg);max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid var(--bd);padding:4px 6px;text-align:left}
+.warn{border-left:4px solid #d9822b}
+</style>
+</head>
+<body>
+<main>
+<h1>🎬 Macro Recorder (mirip iMacros)</h1>
+<p>Rekam klik &amp; isian form di halaman web, ulangi sesuai jumlah yang diatur, atau ulangi per baris data hasil copy dari Excel/Sheet.</p>
+
+<div class="card warn">
+<b>Batasan penting:</b> alat ini hanya bisa merekam <b>halaman web / aplikasi berbasis browser</b> (misal SIMRS web). Aplikasi desktop (Windows) tidak bisa dijangkau oleh HTML; untuk itu pakai AutoHotkey atau Pulover's Macro Creator.
+</div>
+
+<div class="card">
+<h2>1. Pasang (sekali saja)</h2>
+<p><b>Cara A (bookmark):</b> seret tombol hijau ini ke bookmark bar browser:</p>
+<p><a class="bm" id="bm" href="#">🎬 Macro</a></p>
+<p>Jika tidak bisa diseret: klik <button id="cp1">Salin kode bookmark</button>, buat bookmark baru, tempel kode itu di kolom URL.</p>
+<p><b>Cara B (jika situs memblokir bookmark):</b> <button id="cp2">Salin kode</button> lalu tempel di Console (F12) pada halaman tujuan, Enter.</p>
+</div>
+
+<div class="card">
+<h2>2. Cara pakai</h2>
+<ol>
+<li>Buka halaman web tujuan, klik bookmark <b>Macro</b> → panel muncul di kanan bawah.</li>
+<li>Tempel data Excel di kotak <b>Data Excel</b> (blok sel termasuk baris judul, lalu Ctrl+C, Ctrl+V). Contoh judul: <code>Nama</code>, <code>TglHD</code>, <code>KtV</code>.</li>
+<li>Klik <b>● Rekam</b>, kerjakan satu pasien seperti biasa. Nilai yang sama dengan baris data pertama otomatis menjadi <code>{{Kolom}}</code>.</li>
+<li>Klik <b>■ Selesai rekam</b>, cek/ubah langkah, lalu <b>▶ Jalankan</b>. Makro berulang untuk tiap baris data (atau sebanyak "Ulangi N kali" bila tanpa data).</li>
+</ol>
+<p><b>Format langkah</b> (satu per baris, bisa diedit):</p>
+<pre>click | #btnTambah
+set | #nama | {{Nama}}
+set | #tglHd | {{TglHD}}
+set | #adekuasi | {{KtV}}
+wait | 1000
+click | #btnSimpan</pre>
+<p>Placeholder khusus: <code>{{no}}</code> nomor urut, <code>{{today}}</code> tanggal hari ini. Untuk isian tipe tanggal, format <code>15/10/2026</code> otomatis diubah ke format yang diterima browser. Langkah &amp; data tersimpan otomatis di browser per situs.</p>
+<p><small>Catatan: jika klik membuat halaman dimuat ulang penuh, panel hilang (aktifkan lagi). Aplikasi satu halaman (SPA) aman.</small></p>
+</div>
+
+<div class="card">
+<h2>3. Coba dulu di sini</h2>
+<p><button id="demo">Aktifkan perekam di halaman ini</button></p>
+<p>Nama <input id="nama" placeholder="Nama pasien"> Tgl HD <input id="tgl" type="date"> Kt/V <input id="ktv" type="number" step="0.01" style="width:80px"> <button id="simpan">Simpan</button></p>
+<table><thead><tr><th>Nama</th><th>Tgl HD</th><th>Kt/V</th></tr></thead><tbody id="tb"></tbody></table>
+<p><small>Data contoh untuk ditempel:</small></p>
+<pre>Nama	TglHD	KtV
+Budi	15/10/2026	1.4
+Sari	16/10/2026	1.6
+Andi	17/10/2026	1.3</pre>
+</div>
+</main>
+
+<script type="text/plain" id="eng">
+(function(){
+if(window.__mk)window.__mk.rm();
+var K='mk_v1',rec=false,stop=false,S={},TX=/^(text|search|tel|email|number|date|password|time|url|month|datetime-local)$/;
+try{S=JSON.parse(localStorage.getItem(K)||'{}')}catch(e){}
+var ts='width:100%;box-sizing:border-box;font:11px monospace;margin:2px 0 4px';
+var P=document.createElement('div');
+P.style.cssText='position:fixed;right:12px;bottom:12px;width:350px;max-height:92vh;overflow:auto;background:#fff;color:#111;font:12px/1.4 system-ui,sans-serif;border:2px solid #0a7;border-radius:10px;padding:10px;z-index:2147483647;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+P.innerHTML='<div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px"><span>🎬 Macro</span><span id="x" style="cursor:pointer">✕</span></div>'
++'<div style="margin:6px 0"><button id="br">● Rekam</button> <button id="bp">▶ Jalankan</button> <button id="bs">■ Stop</button> <button id="bc">Hapus</button></div>'
++'<b>Langkah</b> (bisa diedit)<textarea id="st" rows="8" style="'+ts+'"></textarea>'
++'<b>Data Excel</b> (tempel, baris 1 = judul kolom)<textarea id="dt" rows="4" style="'+ts+'"></textarea>'
++'<div id="inf" style="color:#555;margin-bottom:4px"></div>'
++'<div>Ulangi <input id="n" type="number" value="1" style="width:46px"> kali · Jeda <input id="dl" type="number" value="400" style="width:56px"> ms</div>'
++'<div><label><input id="ud" type="checkbox" checked> Pakai data</label> · Baris <input id="fa" type="number" style="width:46px"> s/d <input id="fb" type="number" style="width:46px"></div>'
++'<div id="lg" style="margin-top:6px;font-weight:600"></div>';
+document.body.appendChild(P);
+var g=function(i){return P.querySelector('#'+i)};
+var sl=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+function say(t){g('lg').textContent=t}
+g('st').value=S.st||'';g('dt').value=S.dt||'';g('n').value=S.n||1;g('dl').value=S.dl||400;
+function sv(){try{localStorage.setItem(K,JSON.stringify({st:g('st').value,dt:g('dt').value,n:g('n').value,dl:g('dl').value}))}catch(e){}}
+function rows(){var l=g('dt').value.replace(/\r/g,'').split('\n').filter(function(x){return x.trim()});if(!l.length)return{h:[],r:[]};var h=l[0].split('\t').map(function(x){return x.trim()});return{h:h,r:l.slice(1).map(function(x){var c=x.split('\t'),o={};h.forEach(function(k,i){o[k]=(c[i]||'').trim()});return o})}}
+function info(){var d=rows();g('inf').textContent=d.r.length?d.r.length+' baris · '+d.h.map(function(h){return'{{'+h+'}}'}).join(' '):'Belum ada data'}
+P.addEventListener('input',function(){sv();info()});info();
+function add(l){var s=g('st');s.value+=(s.value?'\n':'')+l;s.scrollTop=s.scrollHeight;sv()}
+function sel(e){var p=[],top=true;while(e&&e.nodeType==1&&e!==document.body){var t=e.tagName.toLowerCase();if(e.id){var q='#'+CSS.escape(e.id);if(document.querySelectorAll(q).length==1){p.unshift(q);top=false;break}}var n=e.getAttribute('name');if(n){var q2=t+'[name="'+n+'"]';if(document.querySelectorAll(q2).length==1){p.unshift(q2);top=false;break}}var i=1,s=e;while(s=s.previousElementSibling){if(s.tagName==e.tagName)i++}p.unshift(t+':nth-of-type('+i+')');e=e.parentElement}return(top?'body>':'')+p.join('>')}
+function isTxt(e){var t=e.tagName;return t=='SELECT'||t=='TEXTAREA'||(t=='INPUT'&&TX.test(e.type||'text'))}
+function onC(ev){var e=ev.target;if(!rec||P.contains(e)||isTxt(e))return;add('click | '+sel(e))}
+function onH(ev){var e=ev.target;if(!rec||P.contains(e)||!isTxt(e))return;var v=e.value,d=rows();if(v&&d.r[0]){for(var k in d.r[0]){if(d.r[0][k]===v){v='{{'+k+'}}';break}}}add('set | '+sel(e)+' | '+v)}
+document.addEventListener('click',onC,true);document.addEventListener('change',onH,true);
+async function wf(s){for(var i=0;i<50;i++){var e=document.querySelector(s);if(e)return e;await sl(100)}throw new Error('Elemen tidak ketemu: '+s)}
+function fill(s,o){return s.replace(/\{\{(.+?)\}\}/g,function(m,k){k=k.trim();if(k=='no')return o.__i;if(k=='today')return new Date().toISOString().slice(0,10);return k in o?o[k]:''})}
+function setV(e,v){if(e.tagName=='SELECT'){var op=[].slice.call(e.options).filter(function(x){return x.value==v||x.text.trim()==v})[0];if(op)v=op.value}
+if(e.type=='date'){var m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(m)v=m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2)}
+var pr=e.tagName=='SELECT'?HTMLSelectElement.prototype:e.tagName=='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+Object.getOwnPropertyDescriptor(pr,'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))}
+async function exec(L,o){for(var j=0;j<L.length;j++){if(stop)throw new Error('Dihentikan');var p=L[j].split('|').map(function(x){return x.trim()}),c=p[0];if(c=='click'){(await wf(p[1])).click()}else if(c=='set'){setV(await wf(p[1]),fill(p.slice(2).join('|').trim(),o))}else if(c=='wait'){await sl(+p[1]||500)}}}
+async function go(){if(rec)g('br').click();var d=rows(),L=g('st').value.split('\n').filter(function(x){return x.trim()&&x.trim()[0]!='#'}),dl=+g('dl').value||400,items=[],i;
+if(d.r.length&&g('ud').checked){var a=(+g('fa').value||1)-1,b=+g('fb').value||d.r.length;items=d.r.slice(a,b).map(function(o,k){o.__i=a+k+1;return o})}else{for(i=0;i<(+g('n').value||1);i++)items.push({__i:i+1})}
+stop=false;try{for(var k=0;k<items.length;k++){say('Berjalan '+(k+1)+'/'+items.length+' …');await exec(L,items[k]);await sl(dl)}say('Selesai ✔ ('+items.length+'x)')}catch(x){say(x.message+(items.length>1?' (di putaran '+(k+1)+')':''))}}
+g('br').onclick=function(){rec=!rec;this.textContent=rec?'■ Selesai rekam':'● Rekam';this.style.background=rec?'#fcc':'';say(rec?'Merekam… kerjakan seperti biasa':'Rekaman berhenti')};
+g('bp').onclick=go;g('bs').onclick=function(){stop=true};g('bc').onclick=function(){g('st').value='';sv()};
+function rm(){P.remove();document.removeEventListener('click',onC,true);document.removeEventListener('change',onH,true);delete window.__mk}
+g('x').onclick=rm;window.__mk={rm:rm};
+})();
+</script>
+
+<script>
+var raw=document.getElementById('eng').textContent.replace(/\s*\n\s*/g,' ').trim();
+var bmCode='javascript:'+encodeURIComponent(raw);
+document.getElementById('bm').href=bmCode;
+function cp(t,b){navigator.clipboard.writeText(t).then(function(){var o=b.textContent;b.textContent='Tersalin ✔';setTimeout(function(){b.textContent=o},1500)}).catch(function(){prompt('Salin kode ini:',t)})}
+document.getElementById('cp1').onclick=function(){cp(bmCode,this)};
+document.getElementById('cp2').onclick=function(){cp(raw,this)};
+document.getElementById('demo').onclick=function(){var s=document.createElement('script');s.textContent=raw;document.body.appendChild(s)};
+document.getElementById('simpan').onclick=function(){
+  var r=document.createElement('tr');
+  ['nama','tgl','ktv'].forEach(function(i){var c=document.createElement('td');c.textContent=document.getElementById(i).value;r.appendChild(c)});
+  document.getElementById('tb').appendChild(r);
+};
+</script>
+</body>
+</html>

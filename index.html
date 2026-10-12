@@ -73,17 +73,18 @@ function rh(){var h=g('hs');h.innerHTML='';if(!H.length){h.textContent='(belum a
 rh();
 g('sv').onclick=function(){var st=g('st').value.trim();if(!st){say('Langkah kosong');return}H.unshift({name:g('nm').value.trim()||('Rekaman '+new Date().toLocaleString('id-ID')),st:st});sh();rh();g('nm').value='';say('Tersimpan di riwayat ✔')};
 function uq(q){try{return document.querySelectorAll(q).length==1}catch(e){return false}}
-function at(e){var t=e.tagName.toLowerCase(),q,v,i,A=['data-testid','data-test','formcontrolname','name','aria-label','placeholder'];
-if(e.id&&!DYN.test(e.id)){q='#'+CSS.escape(e.id);if(uq(q))return q}
+function at(e,anc){var t=e.tagName.toLowerCase(),q,v,i,m,A=['data-testid','data-test','formcontrolname','name','aria-label','placeholder'];
+if(e.id){if(/\d/.test(e.id)){m=e.id.match(/^([A-Za-z][\w-]*[-_])\d+$/);if(m&&anc)return'[id^="'+m[1]+'"]'}else{q='#'+CSS.escape(e.id);if(uq(q))return q}}
 for(i=0;i<A.length;i++){v=e.getAttribute(A[i]);if(v&&!DYN.test(v)){q=t+'['+A[i]+'="'+v.replace(/"/g,'\\"')+'"]';if(uq(q))return q;if(e.value&&/radio|checkbox/.test(e.type)){q+='[value="'+e.value.replace(/"/g,'\\"')+'"]';if(uq(q))return q}}}
 return null}
-function sel(e){var p=[],top=true,a,i,s;while(e&&e.nodeType==1&&e!==document.body){a=at(e);if(a){p.unshift(a);top=false;break}i=1;s=e;while(s=s.previousElementSibling){if(s.tagName==e.tagName)i++}p.unshift(e.tagName.toLowerCase()+':nth-of-type('+i+')');e=e.parentElement}return(top?'body>':'')+p.join('>')}
+function sel(e){var o=e,p=[],top=true,a,i,s;while(e&&e.nodeType==1&&e!==document.body){a=at(e,e!==o);if(a){p.unshift(a);top=false;break}i=1;s=e;while(s=s.previousElementSibling){if(s.tagName==e.tagName)i++}p.unshift(e.tagName.toLowerCase()+':nth-of-type('+i+')');e=e.parentElement}return(top?'body>':'')+p.join('>')}
 function isTxt(e){var t=e.tagName;return t=='SELECT'||t=='TEXTAREA'||(t=='INPUT'&&TX.test(e.type||'text'))}
 function tgt(e){return e.closest('button,a,label,input,select,textarea,[role=button],[role=radio],[role=checkbox],[role=option],[role=tab],li,td')||e}
 function onC(ev){var e=ev.target;if(!rec||P.contains(e))return;e=tgt(e);if(isTxt(e))return;if(e.tagName=='INPUT'&&/radio|checkbox/.test(e.type)){add('check | '+sel(e)+' | '+e.checked);return}add('click | '+sel(e))}
 function onH(ev){var e=ev.target;if(!rec||P.contains(e)||!isTxt(e))return;add('set | '+sel(e)+' | '+e.value)}
 document.addEventListener('click',onC,true);document.addEventListener('change',onH,true);
-async function wf(s){for(var i=0;i<100;i++){var e;try{e=document.querySelector(s)}catch(x){throw new Error('Selector salah: '+s)}if(e)return e;await sl(100)}throw new Error('Elemen tidak ketemu: '+s)}
+function fnd(s){return [].slice.call(document.querySelectorAll(s)).filter(function(e){return e.getClientRects().length>0})[0]}
+async function wf(s){var n=s.replace(/#([A-Za-z][\w-]*[-_])\d+(?![\w-])/g,'[id^="$1"]'),i,e;try{for(i=0;i<80;i++){e=fnd(s)||(n!=s&&fnd(n));if(e)return e;await sl(100)}e=document.querySelector(s)||(n!=s&&document.querySelector(n))}catch(x){throw new Error('Selector salah: '+s)}if(e)return e;throw new Error('Elemen tidak ketemu: '+s)}
 function ck(e){e.scrollIntoView({block:'center'});['pointerdown','mousedown','pointerup','mouseup'].forEach(function(t){e.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}))});e.click()}
 function fill(s,k){return s.replace(/\{\{(.+?)\}\}/g,function(m,x){x=x.trim();return x=='no'?k:x=='today'?new Date().toISOString().slice(0,10):''})}
 function setV(e,v){e.focus();if(e.tagName=='SELECT'){var op=[].slice.call(e.options).filter(function(x){return x.value==v||x.text.trim()==v})[0];if(op)v=op.value}

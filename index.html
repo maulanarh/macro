@@ -41,14 +41,14 @@ pre{padding:8px;overflow-x:auto}
 set | textarea[name="catatan"] | Tidak ada keluhan
 check | input[name="gangguan"][value="ya"] | true
 wait | 1000</pre>
-<p><small>Jika ada langkah gagal, panel menampilkan nomor langkahnya. Hapus atau perbaiki baris itu. Jika klik membuat halaman dimuat ulang penuh, panel hilang (langkah draf tetap tersimpan). Nilai <code>{{today}}</code> diisi tanggal hari ini.</small></p>
+<p><small>Jika ada langkah gagal, panel menampilkan nomor langkahnya. Hapus atau perbaiki baris itu. Jika klik membuat halaman dimuat ulang penuh, panel hilang (langkah draf tetap tersimpan). Nilai <code>{{today}}</code> diisi tanggal hari ini; <code>{{?BB naik berapa kg}}</code> memunculkan pertanyaan saat makro jalan, supaya isian khusus pasien (misalnya angka BB atau UF) tidak ikut tersalin. Baris baru di dalam isian ditulis <code>\n</code>.</small></p>
 </div>
 </main>
 
 <script type="text/plain" id="eng">
 (function(){
 if(window.__mk)window.__mk.rm();
-var K='mk_hist',D='mk_draft',rec=false,stop=false,H=[],TX=/^(text|search|tel|email|number|date|password|time|url|month|datetime-local)$/,DYN=/\d{3,}|^(mat|ng|cdk|ui|react|:r|select2)|[0-9a-f]{8}-[0-9a-f]{4}/i;
+var Q={},K='mk_hist',D='mk_draft',rec=false,stop=false,H=[],TX=/^(text|search|tel|email|number|date|password|time|url|month|datetime-local)$/,DYN=/\d{3,}|^(mat|ng|cdk|ui|react|:r|select2)|[0-9a-f]{8}-[0-9a-f]{4}/i;
 try{H=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){}
 var ts='width:100%;box-sizing:border-box;font:11px monospace;margin:2px 0 4px';
 var P=document.createElement('div');
@@ -69,7 +69,7 @@ g('st').value=localStorage.getItem(D)||'';
 P.addEventListener('input',dr);
 function add(l){var s=g('st');s.value+=(s.value?'\n':'')+l;s.scrollTop=s.scrollHeight;dr()}
 function btn(t,f){var b=document.createElement('button');b.textContent=t;b.onclick=f;return b}
-function rh(){var h=g('hs');h.innerHTML='';if(!H.length){h.textContent='(belum ada)';return}H.forEach(function(x,i){var r=document.createElement('div');r.style.cssText='display:flex;gap:4px;align-items:center;margin:2px 0';var s=document.createElement('span');s.style.flex='1';s.textContent=x.name+' ('+x.st.split('\n').length+')';r.append(s,btn('Muat',function(){g('st').value=x.st;dr();say('Dimuat: '+x.name)}),btn('▶',function(){g('st').value=x.st;dr();go()}),btn('✕',function(){H.splice(i,1);sh();rh()}));h.appendChild(r)})}
+function rh(){var h=g('hs');h.innerHTML='';if(!H.length){h.textContent='(belum ada)';return}H.forEach(function(x,i){var r=document.createElement('div');r.style.cssText='display:flex;gap:4px;align-items:center;margin:2px 0';var s=document.createElement('span');s.style.flex='1';s.textContent=x.name+' ('+parse(x.st).length+')';r.append(s,btn('Muat',function(){g('st').value=x.st;dr();say('Dimuat: '+x.name)}),btn('▶',function(){g('st').value=x.st;dr();go()}),btn('✕',function(){H.splice(i,1);sh();rh()}));h.appendChild(r)})}
 rh();
 g('sv').onclick=function(){var st=g('st').value.trim();if(!st){say('Langkah kosong');return}H.unshift({name:g('nm').value.trim()||('Rekaman '+new Date().toLocaleString('id-ID')),st:st});sh();rh();g('nm').value='';say('Tersimpan di riwayat ✔')};
 function uq(q){try{return document.querySelectorAll(q).length==1}catch(e){return false}}
@@ -78,28 +78,29 @@ if(e.id){if(/\d/.test(e.id)){m=e.id.match(/^([A-Za-z][\w-]*[-_])\d+$/);if(m&&anc
 for(i=0;i<A.length;i++){v=e.getAttribute(A[i]);if(v&&!DYN.test(v)){q=t+'['+A[i]+'="'+v.replace(/"/g,'\\"')+'"]';if(uq(q))return q;if(e.value&&/radio|checkbox/.test(e.type)){q+='[value="'+e.value.replace(/"/g,'\\"')+'"]';if(uq(q))return q}}}
 return null}
 function sel(e){var o=e,p=[],top=true,a,i,s;while(e&&e.nodeType==1&&e!==document.body){a=at(e,e!==o);if(a){p.unshift(a);top=false;break}i=1;s=e;while(s=s.previousElementSibling){if(s.tagName==e.tagName)i++}p.unshift(e.tagName.toLowerCase()+':nth-of-type('+i+')');e=e.parentElement}return(top?'body>':'')+p.join('>')}
+function parse(t){var L=[];t.replace(/\r/g,'').split('\n').forEach(function(l){if(/^\s*(click|set|check|wait)\s*\|/.test(l)){L.push(l.trim())}else if(L.length&&/^set\s*\|/.test(L[L.length-1])){L[L.length-1]+='\n'+l}});return L.map(function(l){return l.replace(/\s+$/,'')})}
 function isTxt(e){var t=e.tagName;return t=='SELECT'||t=='TEXTAREA'||(t=='INPUT'&&TX.test(e.type||'text'))}
 function tgt(e){return e.closest('button,a,label,input,select,textarea,[role=button],[role=radio],[role=checkbox],[role=option],[role=tab],li,td')||e}
 function tx(e){var t=(e.innerText||'').replace(/\s+/g,' ').trim();return t.length>0&&t.length<=50&&t.indexOf('|')<0?t:''}
 function onC(ev){var e=ev.target;if(!rec||P.contains(e))return;e=tgt(e);if(isTxt(e))return;if(e.tagName=='INPUT'&&/radio|checkbox/.test(e.type)){add('check | '+sel(e)+' | '+e.checked);return}add('click | '+sel(e)+(tx(e)?' | '+tx(e):''))}
-function onH(ev){var e=ev.target;if(!rec||P.contains(e)||!isTxt(e))return;add('set | '+sel(e)+' | '+e.value)}
+function onH(ev){var e=ev.target;if(!rec||P.contains(e)||!isTxt(e))return;add('set | '+sel(e)+' | '+e.value.replace(/\r?\n/g,'\\n'))}
 document.addEventListener('click',onC,true);document.addEventListener('change',onH,true);
 function fnd(s){return [].slice.call(document.querySelectorAll(s)).filter(function(e){return e.getClientRects().length>0})[0]}
 function ft(t){var c=[].slice.call(document.querySelectorAll('button,a,label,md-checkbox,md-radio-button,md-option,md-tab-item,li,td,span,div,p')).filter(function(e){return e.children.length<3&&e.getClientRects().length&&(e.innerText||'').replace(/\s+/g,' ').trim()===t});return c.filter(function(e){return!c.some(function(o){return o!==e&&e.contains(o)})})[0]}
 function dg(s){var p=s.split('>'),i,q;for(i=p.length;i>0;i--){q=p.slice(0,i).join('>');try{if(fnd(q))break}catch(x){}}return i?'cocok sampai bagian '+i+'/'+p.length+', gagal di: '+p[i]:'bagian awal tidak ketemu: '+p[0]}
 async function wf(s,t){var n=s.replace(/#([A-Za-z][\w-]*[-_])\d+(?![\w-])/g,'[id^="$1"]'),i,e;try{for(i=0;i<80;i++){e=fnd(s)||(n!=s&&fnd(n))||(t&&i>=15&&ft(t));if(e)return e;await sl(100)}e=document.querySelector(s)||(n!=s&&document.querySelector(n))}catch(x){throw new Error('Selector salah: '+s)}if(e)return e;throw new Error('Elemen tidak ketemu ('+dg(n)+')')}
 function ck(e){e.scrollIntoView({block:'center'});['pointerdown','mousedown','pointerup','mouseup'].forEach(function(t){e.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}))});e.click()}
-function fill(s,k){return s.replace(/\{\{(.+?)\}\}/g,function(m,x){x=x.trim();return x=='no'?k:x=='today'?new Date().toISOString().slice(0,10):''})}
+function fill(s,k){return s.replace(/\{\{(.+?)\}\}/g,function(m,x){x=x.trim();return x=='no'?k:x=='today'?new Date().toISOString().slice(0,10):x[0]=='?'?(x in Q?Q[x]:(Q[x]=prompt(x.slice(1))||'')):''})}
 function setV(e,v){e.focus();if(e.tagName=='SELECT'){var op=[].slice.call(e.options).filter(function(x){return x.value==v||x.text.trim()==v})[0];if(op)v=op.value}
 if(e.type=='date'){var m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(m)v=m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2)}
 var pr=e.tagName=='SELECT'?HTMLSelectElement.prototype:e.tagName=='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
 Object.getOwnPropertyDescriptor(pr,'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.blur()}
 async function exec(L,k,d){for(var j=0;j<L.length;j++){if(stop)throw new Error('Dihentikan');say('Langkah '+(j+1)+'/'+L.length+(k?' · putaran '+k:''));var p=L[j].split('|').map(function(x){return x.trim()}),c=p[0],e;
-try{if(c=='click'){ck(await wf(p[1],p[2]))}else if(c=='set'){setV(await wf(p[1]),fill(p.slice(2).join('|').trim(),k))}else if(c=='check'){e=await wf(p[1]);if(e.checked!==(p[2]=='true'))ck(e)}else if(c=='wait'){await sl(+p[1]||500)}}
+try{if(c=='click'){ck(await wf(p[1],p[2]))}else if(c=='set'){setV(await wf(p[1]),fill(p.slice(2).join('|').trim(),k).replace(/\\n/g,'\n'))}else if(c=='check'){e=await wf(p[1]);if(e.checked!==(p[2]=='true'))ck(e)}else if(c=='wait'){await sl(+p[1]||500)}}
 catch(x){throw new Error('Langkah '+(j+1)+' gagal: '+x.message)}
 await sl(d)}}
-async function go(){if(rec)g('br').click();var L=g('st').value.split('\n').filter(function(x){return x.trim()&&x.trim()[0]!='#'}),N=+g('n').value||1,d=+g('dl').value||250;stop=false;
-try{for(var k=1;k<=N;k++){await exec(L,k,d);await sl(500)}say('Selesai ✔'+(N>1?' ('+N+'x)':''))}catch(x){say(x.message)}}
+async function go(){if(rec)g('br').click();var L=parse(g('st').value),N=+g('n').value||1,d=+g('dl').value||250;stop=false;
+try{for(var k=1;k<=N;k++){Q={};await exec(L,k,d);await sl(500)}say('Selesai ✔'+(N>1?' ('+N+'x)':''))}catch(x){say(x.message)}}
 g('br').onclick=function(){rec=!rec;this.textContent=rec?'■ Selesai rekam':'● Rekam';this.style.background=rec?'#fcc':'';say(rec?'Merekam… isi form seperti biasa':'Rekaman berhenti')};
 g('bp').onclick=go;g('bs').onclick=function(){stop=true};g('bc').onclick=function(){g('st').value='';dr()};
 function rm(){P.remove();document.removeEventListener('click',onC,true);document.removeEventListener('change',onH,true);delete window.__mk}
